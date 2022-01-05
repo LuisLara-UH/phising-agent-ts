@@ -25,11 +25,12 @@ const handleTransaction: HandleTransaction = async (txEvent: TransactionEvent) =
   var callerAddress : string = txEvent.from ? txEvent.from : ""
   var timestamp : number = txEvent.timestamp
 
+  
   // return empty if caller is a contract
   if(isContractAddress(callerAddress)) { return findings }
 
   // save targeted address
-  if (!(targetedAddress in Object.keys(ownedAddresses))){
+  if (!(targetedAddress in ownedAddresses)){
     ownedAddresses[targetedAddress] = new OwnedAddress(targetedAddress)
   }
   var address = ownedAddresses[targetedAddress]
@@ -45,7 +46,7 @@ const handleTransaction: HandleTransaction = async (txEvent: TransactionEvent) =
     {
       findings.push(Finding.fromObject({
         name: "Possible Phishing Attack",
-        description: `Attackers accounts: ${address.getCallers()}`,
+        description: `Attackers accounts: `,
         alertId: "FORTA-1",
         severity: FindingSeverity.Info,
         type: FindingType.Suspicious
@@ -53,7 +54,6 @@ const handleTransaction: HandleTransaction = async (txEvent: TransactionEvent) =
       findingsCount++
     }
   }
-
   return findings
 }
 

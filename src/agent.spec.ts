@@ -6,9 +6,8 @@ import {
   createTransactionEvent
 } from "forta-agent"
 import agent from "./agent"
-import { MAXIMUM_CALLERS_ALLOWED, DEFAULT_CALLER_ADDRESS, 
-    DEFAULT_TARGETED_ADDRESS, DEFAULT_CALLER_ADDRESS_PREFIX } from './constants'
-import { encodeFunction } from './utils'
+import { MAXIMUM_CALLERS_ALLOWED, DEFAULT_CALLER_ADDRESS, DEFAULT_TARGETED_ADDRESS } from './constants'
+import { encodeFunction, makeAddress } from './utils'
 
 describe("phishing attack agent", () => {
   let handleTransaction: HandleTransaction
@@ -24,7 +23,7 @@ describe("phishing attack agent", () => {
         } 
       } as any],
     receipt: {} as any,
-    block: {} as any,
+    block: { timestamp: timestamp } as any,
   })
 
   beforeAll(() => {
@@ -35,7 +34,8 @@ describe("phishing attack agent", () => {
     it("returns empty findings if number of calls to approve is below threshold", async () => {
       const txEvent = createTxEventWithApprove()
 
-      const findings = await handleTransaction(txEvent)
+      var findings: Finding[] = []
+      await handleTransaction(txEvent).then(result => {findings = result})
 
       expect(findings).toStrictEqual([])
     })
@@ -43,10 +43,11 @@ describe("phishing attack agent", () => {
     it("returns a finding if number of calls to approve is above threshold", async () => {
       var findings : Finding[] = [];
 
-      for(const i in Array(MAXIMUM_CALLERS_ALLOWED + 1).keys())
+      var i = MAXIMUM_CALLERS_ALLOWED + 1
+      while(--i)
       {
-        const txEvent = createTxEventWithApprove(DEFAULT_CALLER_ADDRESS_PREFIX + i)
-        findings.concat(await handleTransaction(txEvent))
+        const txEvent = createTxEventWithApprove(makeAddress(i))
+        await handleTransaction(txEvent).then(result => { findings = findings.concat(result) })
       }
 
       expect(findings).toStrictEqual([
